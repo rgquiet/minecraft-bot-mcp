@@ -14,6 +14,7 @@ import {
   createNotConnectedResponse,
   createSuccessResponse,
 } from '../utils/error-handler.js'
+import { onBotDisconnect } from '../routines/index.js'
 
 // Login/connection tool
 export function registerConnectTools() {
@@ -66,6 +67,12 @@ export function registerConnectTools() {
           // When login is successful
           bot.once('spawn', () => {
             updateConnectionState(true, bot)
+
+            // Clean up routines when bot disconnects
+            bot.on('end', () => {
+              onBotDisconnect()
+            })
+
             resolve(
               createSuccessResponse(
                 `Successfully connected to ${host}:${port} as ${username}`
@@ -106,6 +113,9 @@ export function registerConnectTools() {
       }
 
       try {
+        // Clean up routines before disconnecting
+        onBotDisconnect()
+
         botState.bot.quit()
         updateConnectionState(false, null)
         return createSuccessResponse(

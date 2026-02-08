@@ -9,6 +9,7 @@ import { registerInfoTools } from './info.js'
 import { registerInventoryTools } from './inventory.js'
 import { registerInventoryManagementTools } from './inventoryManagement.js'
 import { registerMovementTools } from './movement.js'
+import { registerRoutineTools } from './routines.js'
 import { registerTradingTools } from './trading.js'
 
 // Function to register all tools
@@ -38,4 +39,7 @@ export function registerAllTools(): void {
   registerContainerInteractionTools()
   registerCraftingTools()
   registerTradingTools()
+
+  // Routines (long-running behaviors)
+  registerRoutineTools()
 }
