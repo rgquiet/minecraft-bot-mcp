@@ -1,5 +1,3 @@
-import type { Bot } from 'mineflayer'
-
 // Base state for all routines
 export interface RoutineState {
   type: string
@@ -20,15 +18,6 @@ export interface GuardRoutineState extends RoutineState {
 
 // Union type for all routine states
 export type ActiveRoutineState = GuardRoutineState
-
-// Interface for routine implementations
-export interface Routine {
-  name: string
-  start(bot: Bot, config: Record<string, unknown>): void
-  stop(bot: Bot): void
-  getStatus(): RoutineState | null
-  cleanup(bot: Bot): void
-}
 
 // Tracked event listener for cleanup
 export interface TrackedListener {

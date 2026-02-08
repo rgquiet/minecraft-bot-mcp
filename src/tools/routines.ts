@@ -49,7 +49,7 @@ export function registerRoutineTools() {
         if (result.success) {
           return createSuccessResponse(result.message)
         } else {
-          return createSuccessResponse(result.message)
+          return createErrorResponse(result.message)
         }
       } catch (error) {
         return createErrorResponse(error)

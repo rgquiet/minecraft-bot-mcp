@@ -11,36 +11,14 @@ import {
   updateRoutineStats,
   getActiveRoutine,
 } from './RoutineManager.js'
+import {
+  HOSTILE_MOBS,
+  BOT_MELEE_ATTACK_RANGE,
+  COMBAT_LOOP_INTERVAL_MS,
+} from '../constants/mobs.js'
 
-// List of hostile mob names to attack
-const HOSTILE_MOBS = [
-  'zombie',
-  'skeleton',
-  'creeper',
-  'spider',
-  'cave_spider',
-  'enderman',
-  'witch',
-  'slime',
-  'magma_cube',
-  'blaze',
-  'ghast',
-  'wither_skeleton',
-  'zombie_villager',
-  'husk',
-  'stray',
-  'phantom',
-  'drowned',
-  'pillager',
-  'vindicator',
-  'ravager',
-  'evoker',
-  'vex',
-  'hoglin',
-  'zoglin',
-  'piglin_brute',
-  'warden',
-]
+// Track entities that the bot has attacked (for accurate kill counting)
+let attackedEntities: Set<number> = new Set()
 
 // Find the nearest hostile mob within range of a position
 function findNearestHostileMob(
@@ -115,10 +93,13 @@ export function startGuardMode(
   // Track previous health for damage detection
   let previousHealth = bot.health
 
+  // Reset attacked entities tracking for this routine
+  attackedEntities = new Set()
+
   // Start following the player
   bot.pathfinder.setGoal(new goals.GoalFollow(playerEntity, followDistance))
 
-  // Set up attack loop (every 500ms)
+  // Set up attack loop
   const attackLoop = setInterval(() => {
     const routine = getActiveRoutine()
     if (!routine || routine.type !== 'guard') {
@@ -148,17 +129,19 @@ export function startGuardMode(
       routine.attackRange
     )
     if (hostileMob) {
-      // Check if mob is within bot's attack range (3 blocks)
+      // Check if mob is within bot's melee attack range
       const distanceToMob = bot.entity.position.distanceTo(hostileMob.position)
-      if (distanceToMob <= 4) {
+      if (distanceToMob <= BOT_MELEE_ATTACK_RANGE) {
         try {
           bot.attack(hostileMob)
+          // Track this entity for accurate kill counting
+          attackedEntities.add(hostileMob.id)
         } catch {
           // Ignore attack errors (entity may have died)
         }
       }
     }
-  }, 500)
+  }, COMBAT_LOOP_INTERVAL_MS)
 
   setAttackInterval(attackLoop)
 
@@ -172,10 +155,11 @@ export function startGuardMode(
     previousHealth = currentHealth
   })
 
-  // Register entity dead listener to count mob kills
+  // Register entity dead listener to count mob kills (only count entities we attacked)
   registerListener(bot, 'entityDead', (entity: Entity) => {
-    if (entity && entity.name && HOSTILE_MOBS.includes(entity.name)) {
+    if (entity && attackedEntities.has(entity.id)) {
       updateRoutineStats({ mobsKilled: 1 })
+      attackedEntities.delete(entity.id)
     }
   })
 
